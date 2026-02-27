@@ -1,0 +1,74 @@
+{
+  "blas": [
+    {
+      "id": "bla_1",
+      "name": "Ramesh",
+      "adminId": "admin_1",
+      "ward": "Ward 1"
+    },
+    {
+      "id": "bla_2",
+      "name": "Suresh",
+      "adminId": "admin_1",
+      "ward": "Ward 2"
+    },
+    {
+      "id": "bla_3",
+      "name": "Karthik",
+      "adminId": "admin_2",
+      "ward": "Ward 1"
+    },
+    {
+      "id": "bla_4",
+      "name": "Priya",
+      "adminId": "admin_2",
+      "ward": "Ward 3"
+    },
+    {
+      "id": "bla_5",
+      "name": "Meena",
+      "adminId": "admin_3",
+      "ward": "Ward 2"
+    },
+    {
+      "id": "bla_6",
+      "name": "Kumar",
+      "adminId": "admin_3",
+      "ward": "Ward 4"
+    }
+  ],
+  "voters": [
+    {"epicId": "EPIC001", "ward": "Ward 1"},
+    {"epicId": "EPIC002", "ward": "Ward 1"},
+    {"epicId": "EPIC003", "ward": "Ward 1"},
+    {"epicId": "EPIC004", "ward": "Ward 2"},
+    {"epicId": "EPIC005", "ward": "Ward 2"},
+    {"epicId": "EPIC006", "ward": "Ward 2"},
+    {"epicId": "EPIC007", "ward": "Ward 3"},
+    {"epicId": "EPIC008", "ward": "Ward 3"},
+    {"epicId": "EPIC009", "ward": "Ward 4"},
+    {"epicId": "EPIC010", "ward": "Ward 4"}
+  ],
+  "consolidations": [
+    {"blaId": "bla_1", "epicId": "EPIC001", "date": "2026-02-25"},
+    {"blaId": "bla_1", "epicId": "EPIC002", "date": "2026-02-25"},
+    {"blaId": "bla_1", "epicId": "EPIC003", "date": "2026-02-26"},
+    {"blaId": "bla_1", "epicId": "EPIC004", "date": "2026-02-27"},
+    {"blaId": "bla_1", "epicId": "EPIC005", "date": "2026-02-27"},
+    {"blaId": "bla_2", "epicId": "EPIC006", "date": "2026-02-25"},
+    {"blaId": "bla_2", "epicId": "EPIC007", "date": "2026-02-26"},
+    {"blaId": "bla_2", "epicId": "EPIC008", "date": "2026-02-26"},
+    {"blaId": "bla_2", "epicId": "EPIC009", "date": "2026-02-27"},
+    {"blaId": "bla_3", "epicId": "EPIC010", "date": "2026-02-26"},
+    {"blaId": "bla_3", "epicId": "EPIC001", "date": "2026-02-27"},
+    {"blaId": "bla_3", "epicId": "EPIC002", "date": "2026-02-27"},
+    {"blaId": "bla_4", "epicId": "EPIC003", "date": "2026-02-25"},
+    {"blaId": "bla_4", "epicId": "EPIC004", "date": "2026-02-25"},
+    {"blaId": "bla_4", "epicId": "EPIC005", "date": "2026-02-26"},
+    {"blaId": "bla_4", "epicId": "EPIC006", "date": "2026-02-27"},
+    {"blaId": "bla_5", "epicId": "EPIC007", "date": "2026-02-24"},
+    {"blaId": "bla_5", "epicId": "EPIC008", "date": "2026-02-25"},
+    {"blaId": "bla_5", "epicId": "EPIC009", "date": "2026-02-27"},
+    {"blaId": "bla_6", "epicId": "EPIC010", "date": "2026-02-26"}
+  ]
+}
