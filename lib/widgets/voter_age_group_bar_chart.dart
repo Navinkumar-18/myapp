@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models/voter.dart';
 
-class VoterAgeGroupBarChart extends StatelessWidget {
+class VoterAgeGroupBarChart extends StatefulWidget {
   const VoterAgeGroupBarChart({
     super.key,
     required this.voters,
@@ -12,8 +12,15 @@ class VoterAgeGroupBarChart extends StatelessWidget {
   final List<Voter> voters;
 
   @override
+  State<VoterAgeGroupBarChart> createState() => _VoterAgeGroupBarChartState();
+}
+
+class _VoterAgeGroupBarChartState extends State<VoterAgeGroupBarChart> {
+  int _hoveredIndex = -1;
+
+  @override
   Widget build(BuildContext context) {
-    if (voters.isEmpty) {
+    if (widget.voters.isEmpty) {
       return const Center(child: Text('No data for selected filters.'));
     }
 
@@ -27,7 +34,7 @@ class VoterAgeGroupBarChart extends StatelessWidget {
     ];
 
     final counts = List<int>.filled(bins.length, 0);
-    for (final voter in voters) {
+    for (final voter in widget.voters) {
       final age = voter.age;
       for (var i = 0; i < bins.length; i++) {
         if (bins[i].match(age)) {
@@ -56,7 +63,28 @@ class VoterAgeGroupBarChart extends StatelessWidget {
           ),
         ),
         borderData: FlBorderData(show: false),
-        barTouchData: BarTouchData(enabled: true),
+        barTouchData: BarTouchData(
+          enabled: true,
+          touchCallback: (event, response) {
+            if (!event.isInterestedForInteractions ||
+                response == null ||
+                response.spot == null) {
+              if (_hoveredIndex != -1) {
+                setState(() {
+                  _hoveredIndex = -1;
+                });
+              }
+              return;
+            }
+
+            final index = response.spot!.touchedBarGroupIndex;
+            if (_hoveredIndex != index) {
+              setState(() {
+                _hoveredIndex = index;
+              });
+            }
+          },
+        ),
         titlesData: FlTitlesData(
           topTitles: const AxisTitles(
             sideTitles: SideTitles(showTitles: false),
@@ -97,24 +125,34 @@ class VoterAgeGroupBarChart extends StatelessWidget {
         ),
         barGroups: List<BarChartGroupData>.generate(
           bins.length,
-          (index) => BarChartGroupData(
-            x: index,
-            barRods: [
-              BarChartRodData(
-                toY: counts[index].toDouble(),
-                width: 18,
-                borderRadius: BorderRadius.circular(6),
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary,
-                    theme.colorScheme.primaryContainer,
-                  ],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
+          (index) {
+            final isHovered = index == _hoveredIndex;
+            final isDimmed = _hoveredIndex != -1 && !isHovered;
+            
+            return BarChartGroupData(
+              x: index,
+              barRods: [
+                BarChartRodData(
+                  toY: counts[index].toDouble(),
+                  width: isHovered ? 22 : 18,
+                  borderRadius: BorderRadius.circular(6),
+                  gradient: LinearGradient(
+                    colors: isDimmed
+                        ? [
+                            theme.colorScheme.primary.withValues(alpha: 0.3),
+                            theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                          ]
+                        : [
+                            theme.colorScheme.primary,
+                            theme.colorScheme.primaryContainer,
+                          ],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
       ),
     );

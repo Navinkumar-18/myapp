@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../models/bla_report_model.dart';
 
-class BlaChartWidget extends StatelessWidget {
+class BlaChartWidget extends StatefulWidget {
   const BlaChartWidget({
     super.key,
     required this.reports,
@@ -15,14 +15,21 @@ class BlaChartWidget extends StatelessWidget {
   final int lowPerformanceThreshold;
 
   @override
+  State<BlaChartWidget> createState() => _BlaChartWidgetState();
+}
+
+class _BlaChartWidgetState extends State<BlaChartWidget> {
+  int _hoveredIndex = -1;
+
+  @override
   Widget build(BuildContext context) {
-    if (reports.isEmpty) {
+    if (widget.reports.isEmpty) {
       return const Center(
         child: Text('No daily report data available.'),
       );
     }
 
-    final maxY = reports
+    final maxY = widget.reports
       .map((entry) => entry.housesVisited.toDouble())
       .reduce((a, b) => a > b ? a : b);
     final chartInterval = maxY <= 10 ? 2 : 5;
@@ -41,7 +48,28 @@ class BlaChartWidget extends StatelessWidget {
           ),
         ),
         borderData: FlBorderData(show: false),
-        barTouchData: BarTouchData(enabled: true),
+        barTouchData: BarTouchData(
+          enabled: true,
+          touchCallback: (event, response) {
+            if (!event.isInterestedForInteractions ||
+                response == null ||
+                response.spot == null) {
+              if (_hoveredIndex != -1) {
+                setState(() {
+                  _hoveredIndex = -1;
+                });
+              }
+              return;
+            }
+
+            final index = response.spot!.touchedBarGroupIndex;
+            if (_hoveredIndex != index) {
+              setState(() {
+                _hoveredIndex = index;
+              });
+            }
+          },
+        ),
         titlesData: FlTitlesData(
           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           rightTitles:
@@ -65,10 +93,10 @@ class BlaChartWidget extends StatelessWidget {
               reservedSize: 38,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index < 0 || index >= reports.length) {
+                if (index < 0 || index >= widget.reports.length) {
                   return const SizedBox.shrink();
                 }
-                final label = DateFormat('dd MMM').format(reports[index].date);
+                final label = DateFormat('dd MMM').format(widget.reports[index].date);
                 return SideTitleWidget(
                   axisSide: meta.axisSide,
                   child: Text(
@@ -81,29 +109,44 @@ class BlaChartWidget extends StatelessWidget {
           ),
         ),
         barGroups: List.generate(
-          reports.length,
-          (index) => BarChartGroupData(
-            x: index,
-            barRods: [
-              BarChartRodData(
-                toY: reports[index].housesVisited.toDouble(),
-                width: 18,
-                borderRadius: BorderRadius.circular(6),
-                gradient: LinearGradient(
-                  colors: [
-                    reports[index].housesVisited < lowPerformanceThreshold
-                        ? Theme.of(context).colorScheme.error
-                        : Theme.of(context).colorScheme.primary,
-                    reports[index].housesVisited < lowPerformanceThreshold
-                        ? Theme.of(context).colorScheme.errorContainer
-                        : Theme.of(context).colorScheme.primaryContainer,
-                  ],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
+          widget.reports.length,
+          (index) {
+            final isHovered = index == _hoveredIndex;
+            final isDimmed = _hoveredIndex != -1 && !isHovered;
+            final isLowPerformance = widget.reports[index].housesVisited < widget.lowPerformanceThreshold;
+            
+            return BarChartGroupData(
+              x: index,
+              barRods: [
+                BarChartRodData(
+                  toY: widget.reports[index].housesVisited.toDouble(),
+                  width: isHovered ? 22 : 18,
+                  borderRadius: BorderRadius.circular(6),
+                  gradient: LinearGradient(
+                    colors: isDimmed
+                        ? [
+                            (isLowPerformance
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(context).colorScheme.primary).withValues(alpha: 0.3),
+                            (isLowPerformance
+                                ? Theme.of(context).colorScheme.errorContainer
+                                : Theme.of(context).colorScheme.primaryContainer).withValues(alpha: 0.3),
+                          ]
+                        : [
+                            isLowPerformance
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(context).colorScheme.primary,
+                            isLowPerformance
+                                ? Theme.of(context).colorScheme.errorContainer
+                                : Theme.of(context).colorScheme.primaryContainer,
+                          ],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
       ),
     );

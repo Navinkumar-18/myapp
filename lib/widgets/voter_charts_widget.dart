@@ -3,20 +3,28 @@ import 'package:flutter/material.dart';
 
 import '../models/voter.dart';
 
-class VoterChartsWidget extends StatelessWidget {
+class VoterChartsWidget extends StatefulWidget {
   const VoterChartsWidget({super.key, required this.voters});
 
   final List<Voter> voters;
 
   @override
+  State<VoterChartsWidget> createState() => _VoterChartsWidgetState();
+}
+
+class _VoterChartsWidgetState extends State<VoterChartsWidget> {
+  int _hoveredPieIndex = -1;
+  int _hoveredBarIndex = -1;
+
+  @override
   Widget build(BuildContext context) {
-    if (voters.isEmpty) {
+    if (widget.voters.isEmpty) {
       return const Center(child: Text('No voter data available.'));
     }
 
-    final maleCount = voters.where((v) => _isMale(v.gender)).length;
-    final femaleCount = voters.where((v) => _isFemale(v.gender)).length;
-    final unknownCount = voters.length - maleCount - femaleCount;
+    final maleCount = widget.voters.where((v) => _isMale(v.gender)).length;
+    final femaleCount = widget.voters.where((v) => _isFemale(v.gender)).length;
+    final unknownCount = widget.voters.length - maleCount - femaleCount;
 
     final theme = Theme.of(context);
     final maleColor = theme.colorScheme.primary;
@@ -36,22 +44,47 @@ class VoterChartsWidget extends StatelessWidget {
                   PieChartData(
                     centerSpaceRadius: 40,
                     sectionsSpace: 2,
+                    pieTouchData: PieTouchData(
+                      enabled: true,
+                      touchCallback: (event, response) {
+                        if (!event.isInterestedForInteractions ||
+                            response == null ||
+                            response.touchedSection == null) {
+                          if (_hoveredPieIndex != -1) {
+                            setState(() {
+                              _hoveredPieIndex = -1;
+                            });
+                          }
+                          return;
+                        }
+
+                        final index = response.touchedSection!.touchedSectionIndex;
+                        if (_hoveredPieIndex != index) {
+                          setState(() {
+                            _hoveredPieIndex = index;
+                          });
+                        }
+                      },
+                    ),
                     sections: [
                       _pieSection(
                         color: maleColor,
                         value: maleCount.toDouble(),
                         title: maleCount == 0 ? '' : maleCount.toString(),
+                        index: 0,
                       ),
                       _pieSection(
                         color: femaleColor,
                         value: femaleCount.toDouble(),
                         title: femaleCount == 0 ? '' : femaleCount.toString(),
+                        index: 1,
                       ),
                       if (unknownCount > 0)
                         _pieSection(
                           color: unknownColor,
                           value: unknownCount.toDouble(),
                           title: unknownCount.toString(),
+                          index: 2,
                         ),
                     ],
                   ),
@@ -95,12 +128,16 @@ class VoterChartsWidget extends StatelessWidget {
     required Color color,
     required double value,
     required String title,
+    required int index,
   }) {
+    final isHovered = index == _hoveredPieIndex;
+    final isDimmed = _hoveredPieIndex != -1 && !isHovered;
+    
     return PieChartSectionData(
-      color: color,
+      color: isDimmed ? color.withValues(alpha: 0.3) : color,
       value: value <= 0 ? 0.0001 : value,
       title: title,
-      radius: 70,
+      radius: isHovered ? 75 : 70,
       titleStyle: const TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w700,
@@ -121,7 +158,7 @@ class VoterChartsWidget extends StatelessWidget {
     ];
 
     final counts = List<int>.filled(bins.length, 0);
-    for (final voter in voters) {
+    for (final voter in widget.voters) {
       final age = voter.age;
       for (var i = 0; i < bins.length; i++) {
         if (bins[i].match(age)) {
@@ -149,7 +186,28 @@ class VoterChartsWidget extends StatelessWidget {
         ),
       ),
       borderData: FlBorderData(show: false),
-      barTouchData: BarTouchData(enabled: true),
+      barTouchData: BarTouchData(
+        enabled: true,
+        touchCallback: (event, response) {
+          if (!event.isInterestedForInteractions ||
+              response == null ||
+              response.spot == null) {
+            if (_hoveredBarIndex != -1) {
+              setState(() {
+                _hoveredBarIndex = -1;
+              });
+            }
+            return;
+          }
+
+          final index = response.spot!.touchedBarGroupIndex;
+          if (_hoveredBarIndex != index) {
+            setState(() {
+              _hoveredBarIndex = index;
+            });
+          }
+        },
+      ),
       titlesData: FlTitlesData(
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -186,24 +244,34 @@ class VoterChartsWidget extends StatelessWidget {
       ),
       barGroups: List<BarChartGroupData>.generate(
         bins.length,
-        (index) => BarChartGroupData(
-          x: index,
-          barRods: [
-            BarChartRodData(
-              toY: counts[index].toDouble(),
-              width: 18,
-              borderRadius: BorderRadius.circular(6),
-              gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.primary,
-                  theme.colorScheme.primaryContainer,
-                ],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
+        (index) {
+          final isHovered = index == _hoveredBarIndex;
+          final isDimmed = _hoveredBarIndex != -1 && !isHovered;
+          
+          return BarChartGroupData(
+            x: index,
+            barRods: [
+              BarChartRodData(
+                toY: counts[index].toDouble(),
+                width: isHovered ? 22 : 18,
+                borderRadius: BorderRadius.circular(6),
+                gradient: LinearGradient(
+                  colors: isDimmed
+                      ? [
+                          theme.colorScheme.primary.withValues(alpha: 0.3),
+                          theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        ]
+                      : [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.primaryContainer,
+                        ],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }

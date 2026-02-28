@@ -29,12 +29,16 @@ class _TopBlaPieChartState extends State<TopBlaPieChart> {
 
     final total =
         widget.topBlas.fold<int>(0, (sum, item) => sum + item.total);
+    // Power BI inspired color palette
     final palette = <Color>[
-      Colors.green,
-      Colors.teal,
-      Colors.lightGreen,
-      Colors.greenAccent,
-      Colors.lime,
+      const Color(0xFF0078D4), // Azure Blue
+      const Color(0xFFD83B01), // Vibrant Orange
+      const Color(0xFF107C10), // Success Green
+      const Color(0xFF5C2E91), // Royal Purple
+      const Color(0xFFFFB900), // Golden Yellow
+      const Color(0xFFE81123), // Crimson Red
+      const Color(0xFF00B7C3), // Cyan Teal
+      const Color(0xFFE3008C), // Magenta Pink
     ];
 
     final hoveredValid = _hoveredIndex >= 0 && _hoveredIndex < widget.topBlas.length;
@@ -43,9 +47,11 @@ class _TopBlaPieChartState extends State<TopBlaPieChart> {
         ? 0.0
         : (hoveredItem.total / total) * 100;
 
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(
+          width: 220,
           height: 220,
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -63,7 +69,7 @@ class _TopBlaPieChartState extends State<TopBlaPieChart> {
                   PieChart(
                     PieChartData(
                       sectionsSpace: 2,
-                      centerSpaceRadius: 42,
+                      centerSpaceRadius: 0,
                       pieTouchData: PieTouchData(
                         enabled: true,
                         touchCallback: (event, response) {
@@ -95,15 +101,24 @@ class _TopBlaPieChartState extends State<TopBlaPieChart> {
                         final percent =
                             total == 0 ? 0.0 : (item.total / total) * 100;
                         final isHovered = index == _hoveredIndex;
+                        final isDimmed = _hoveredIndex != -1 && !isHovered;
+                        final opacity = isDimmed ? 0.3 : 1.0;
+                        
                         return PieChartSectionData(
-                          color: palette[index % palette.length],
+                          color: palette[index % palette.length].withValues(alpha: opacity),
                           value: item.total.toDouble(),
-                          radius: isHovered ? 72 : 64,
+                          radius: isHovered ? 110 : 100,
                           title: '${percent.toStringAsFixed(0)}%',
                           titleStyle: TextStyle(
-                            fontSize: isHovered ? 13 : 12,
-                            fontWeight: FontWeight.w600,
+                            fontSize: isHovered ? 15 : 13,
+                            fontWeight: FontWeight.bold,
                             color: Colors.white,
+                            shadows: const [
+                              Shadow(
+                                color: Colors.black45,
+                                blurRadius: 2,
+                              ),
+                            ],
                           ),
                         );
                       }),
@@ -141,37 +156,43 @@ class _TopBlaPieChartState extends State<TopBlaPieChart> {
             },
           ),
         ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: List<Widget>.generate(widget.topBlas.length, (index) {
-            final item = widget.topBlas[index];
-            final isHovered = index == _hoveredIndex;
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: isHovered ? 12 : 10,
-                  height: isHovered ? 12 : 10,
-                  decoration: BoxDecoration(
-                    color: palette[index % palette.length],
-                    shape: BoxShape.circle,
-                  ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List<Widget>.generate(widget.topBlas.length, (index) {
+              final item = widget.topBlas[index];
+              final isHovered = index == _hoveredIndex;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      width: isHovered ? 12 : 10,
+                      height: isHovered ? 12 : 10,
+                      decoration: BoxDecoration(
+                        color: palette[index % palette.length],
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${item.bla.name} (${item.total})',
+                        style: isHovered
+                            ? Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w700)
+                            : Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  '${item.bla.name} (${item.total})',
-                  style: isHovered
-                      ? Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w700)
-                      : null,
-                ),
-              ],
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ],
     );

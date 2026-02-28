@@ -13,14 +13,18 @@ class VoterScreen extends StatefulWidget {
 
 class _VoterScreenState extends State<VoterScreen> {
   late final Future<List<Voter>> _votersFuture;
+  int? _touchedIndex;
 
+  // Power BI inspired color palette
   static const List<Color> _pieColors = <Color>[
-    Colors.blue,
-    Colors.pink,
-    Colors.green,
-    Colors.orange,
-    Colors.purple,
-    Colors.teal,
+    Color(0xFF0078D4), // Azure Blue
+    Color(0xFFD83B01), // Vibrant Orange
+    Color(0xFF107C10), // Success Green
+    Color(0xFF5C2E91), // Royal Purple
+    Color(0xFFFFB900), // Golden Yellow
+    Color(0xFFE81123), // Crimson Red
+    Color(0xFF00B7C3), // Cyan Teal
+    Color(0xFFE3008C), // Magenta Pink
   ];
 
   @override
@@ -90,22 +94,45 @@ class _VoterScreenState extends State<VoterScreen> {
                           height: 200,
                           child: PieChart(
                             PieChartData(
-                              centerSpaceRadius: 36,
+                              centerSpaceRadius: 0,
                               sectionsSpace: 2,
+                              pieTouchData: PieTouchData(
+                                touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                                  setState(() {
+                                    if (!event.isInterestedForInteractions ||
+                                        pieTouchResponse == null ||
+                                        pieTouchResponse.touchedSection == null) {
+                                      _touchedIndex = null;
+                                      return;
+                                    }
+                                    _touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                                  });
+                                },
+                              ),
                               sections: List<PieChartSectionData>.generate(
                                 entries.length,
                                 (index) {
                                   final entry = entries[index];
-                                  final color = _pieColors[index % _pieColors.length];
+                                  final isTouched = index == _touchedIndex;
+                                  final opacity = _touchedIndex == null || isTouched ? 1.0 : 0.3;
+                                  final color = _pieColors[index % _pieColors.length].withValues(alpha: opacity);
+                                  final radius = isTouched ? 110.0 : 100.0;
+                                  
                                   return PieChartSectionData(
                                     color: color,
                                     value: entry.value.toDouble(),
                                     title: entry.value.toString(),
-                                    radius: 62,
-                                    titleStyle: const TextStyle(
-                                      fontSize: 12,
+                                    radius: radius,
+                                    titleStyle: TextStyle(
+                                      fontSize: isTouched ? 16 : 14,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
+                                      shadows: const [
+                                        Shadow(
+                                          color: Colors.black45,
+                                          blurRadius: 2,
+                                        ),
+                                      ],
                                     ),
                                   );
                                 },

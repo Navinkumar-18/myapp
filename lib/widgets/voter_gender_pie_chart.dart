@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models/voter.dart';
 
-class VoterGenderPieChart extends StatelessWidget {
+class VoterGenderPieChart extends StatefulWidget {
   const VoterGenderPieChart({
     super.key,
     required this.voters,
@@ -12,14 +12,21 @@ class VoterGenderPieChart extends StatelessWidget {
   final List<Voter> voters;
 
   @override
+  State<VoterGenderPieChart> createState() => _VoterGenderPieChartState();
+}
+
+class _VoterGenderPieChartState extends State<VoterGenderPieChart> {
+  int _hoveredIndex = -1;
+
+  @override
   Widget build(BuildContext context) {
-    if (voters.isEmpty) {
+    if (widget.voters.isEmpty) {
       return const Center(child: Text('No data for selected filters.'));
     }
 
-    final maleCount = voters.where((v) => _isMale(v.gender)).length;
-    final femaleCount = voters.where((v) => _isFemale(v.gender)).length;
-    final othersCount = voters.length - maleCount - femaleCount;
+    final maleCount = widget.voters.where((v) => _isMale(v.gender)).length;
+    final femaleCount = widget.voters.where((v) => _isFemale(v.gender)).length;
+    final othersCount = widget.voters.length - maleCount - femaleCount;
 
     final theme = Theme.of(context);
 
@@ -29,10 +36,12 @@ class VoterGenderPieChart extends StatelessWidget {
 
     final sections = <PieChartSectionData>[
       PieChartSectionData(
-        color: maleColor,
+        color: _hoveredIndex != -1 && _hoveredIndex != 0
+            ? maleColor.withValues(alpha: 0.3)
+            : maleColor,
         value: maleCount <= 0 ? 0.0001 : maleCount.toDouble(),
         title: maleCount == 0 ? '' : maleCount.toString(),
-        radius: 70,
+        radius: _hoveredIndex == 0 ? 75 : 70,
         titleStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w700,
@@ -40,10 +49,12 @@ class VoterGenderPieChart extends StatelessWidget {
         ),
       ),
       PieChartSectionData(
-        color: femaleColor,
+        color: _hoveredIndex != -1 && _hoveredIndex != 1
+            ? femaleColor.withValues(alpha: 0.3)
+            : femaleColor,
         value: femaleCount <= 0 ? 0.0001 : femaleCount.toDouble(),
         title: femaleCount == 0 ? '' : femaleCount.toString(),
-        radius: 70,
+        radius: _hoveredIndex == 1 ? 75 : 70,
         titleStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w700,
@@ -52,10 +63,12 @@ class VoterGenderPieChart extends StatelessWidget {
       ),
       if (othersCount > 0)
         PieChartSectionData(
-          color: othersColor,
+          color: _hoveredIndex != -1 && _hoveredIndex != 2
+              ? othersColor.withValues(alpha: 0.2)
+              : othersColor,
           value: othersCount.toDouble(),
           title: othersCount.toString(),
-          radius: 70,
+          radius: _hoveredIndex == 2 ? 75 : 70,
           titleStyle: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
@@ -72,6 +85,28 @@ class VoterGenderPieChart extends StatelessWidget {
               centerSpaceRadius: 40,
               sectionsSpace: 2,
               sections: sections,
+              pieTouchData: PieTouchData(
+                enabled: true,
+                touchCallback: (event, response) {
+                  if (!event.isInterestedForInteractions ||
+                      response == null ||
+                      response.touchedSection == null) {
+                    if (_hoveredIndex != -1) {
+                      setState(() {
+                        _hoveredIndex = -1;
+                      });
+                    }
+                    return;
+                  }
+
+                  final index = response.touchedSection!.touchedSectionIndex;
+                  if (_hoveredIndex != index) {
+                    setState(() {
+                      _hoveredIndex = index;
+                    });
+                  }
+                },
+              ),
             ),
           ),
         ),

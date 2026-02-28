@@ -183,20 +183,23 @@ class _SourceWiseBarChartState extends State<SourceWiseBarChart> {
                 barGroups: List.generate(entries.length, (index) {
                   final entry = entries[index];
                   final isHovered = index == _hoveredIndex;
+                  final isDimmed = _hoveredIndex != -1 && !isHovered;
+                  final opacity = isDimmed ? 0.3 : 1.0;
+                  
                   return BarChartGroupData(
                     x: index,
                     barRods: [
                       BarChartRodData(
                         toY: entry.value.toDouble(),
-                        color: palette[index % palette.length],
-                        width: 28,
+                        color: palette[index % palette.length].withValues(alpha: opacity),
+                        width: isHovered ? 32 : 28,
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(4),
                         ),
                         backDrawRodData: BackgroundBarChartRodData(
                           show: true,
                           toY: maxValue.toDouble() * 1.2,
-                          color: Colors.grey.shade100,
+                          color: Colors.grey.shade100.withValues(alpha: isDimmed ? 0.5 : 1.0),
                         ),
                       ),
                     ],

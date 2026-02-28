@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-class DayWiseBarChart extends StatelessWidget {
+class DayWiseBarChart extends StatefulWidget {
   const DayWiseBarChart({
     super.key,
     required this.dayWiseCount,
@@ -10,14 +10,21 @@ class DayWiseBarChart extends StatelessWidget {
   final Map<String, int> dayWiseCount;
 
   @override
+  State<DayWiseBarChart> createState() => _DayWiseBarChartState();
+}
+
+class _DayWiseBarChartState extends State<DayWiseBarChart> {
+  int _hoveredIndex = -1;
+
+  @override
   Widget build(BuildContext context) {
-    if (dayWiseCount.isEmpty) {
+    if (widget.dayWiseCount.isEmpty) {
       return const Center(
         child: Text('No coverage data available'),
       );
     }
 
-    final entries = dayWiseCount.entries.toList(growable: false);
+    final entries = widget.dayWiseCount.entries.toList(growable: false);
     final maxY = entries
         .map((entry) => entry.value)
         .fold<int>(0, (previous, current) => current > previous ? current : previous)
@@ -34,7 +41,28 @@ class DayWiseBarChart extends StatelessWidget {
             alignment: BarChartAlignment.spaceAround,
             gridData: const FlGridData(show: true, drawVerticalLine: false),
             borderData: FlBorderData(show: false),
-            barTouchData: BarTouchData(enabled: true),
+            barTouchData: BarTouchData(
+              enabled: true,
+              touchCallback: (event, response) {
+                if (!event.isInterestedForInteractions ||
+                    response == null ||
+                    response.spot == null) {
+                  if (_hoveredIndex != -1) {
+                    setState(() {
+                      _hoveredIndex = -1;
+                    });
+                  }
+                  return;
+                }
+
+                final index = response.spot!.touchedBarGroupIndex;
+                if (_hoveredIndex != index) {
+                  setState(() {
+                    _hoveredIndex = index;
+                  });
+                }
+              },
+            ),
             titlesData: FlTitlesData(
               topTitles: AxisTitles(
                 sideTitles: SideTitles(
@@ -107,13 +135,18 @@ class DayWiseBarChart extends StatelessWidget {
               entries.length,
               (index) {
                 final value = entries[index].value.toDouble();
+                final isHovered = index == _hoveredIndex;
+                final isDimmed = _hoveredIndex != -1 && !isHovered;
+                
                 return BarChartGroupData(
                   x: index,
                   barRods: [
                     BarChartRodData(
                       toY: value,
-                      width: barWidth,
-                      color: Colors.green,
+                      width: isHovered ? barWidth + 4 : barWidth,
+                      color: isDimmed 
+                          ? Colors.green.withValues(alpha: 0.3)
+                          : Colors.green,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(8),
                         topRight: Radius.circular(8),
